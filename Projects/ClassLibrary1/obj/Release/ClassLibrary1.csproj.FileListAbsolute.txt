@@ -1,0 +1,5 @@
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\ClassLibrary1\obj\Release\ResolveAssemblyReference.cache
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\ClassLibrary1\bin\Release\ClassLibrary1.dll
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\ClassLibrary1\bin\Release\ClassLibrary1.pdb
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\ClassLibrary1\obj\Release\ClassLibrary1.dll
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\ClassLibrary1\obj\Release\ClassLibrary1.pdb
