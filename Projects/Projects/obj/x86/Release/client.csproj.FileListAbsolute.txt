@@ -5,3 +5,10 @@ C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\Projects\b
 C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\Projects\bin\Release\client.pdb
 C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\Projects\obj\x86\Release\client.exe
 C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch\Projects\Projects\obj\x86\Release\client.pdb
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\obj\x86\Release\client.exe
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\obj\x86\Release\client.pdb
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\bin\Release\client.exe
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\bin\Release\client.pdb
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\bin\Release\ClassLibrary1.dll
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\bin\Release\ClassLibrary1.pdb
+C:\Users\jreed\Documents\Visual Studio 2010\Projects\Netarch_2\Projects\Projects\obj\x86\Release\ResolveAssemblyReference.cache
