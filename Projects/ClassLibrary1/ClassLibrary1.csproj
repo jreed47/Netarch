@@ -40,6 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SimpleFTP.cs" />
+    <Compile Include="FTP.cs" />
     <Compile Include="TPLayer.cs" />
     <Compile Include="UDPLayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

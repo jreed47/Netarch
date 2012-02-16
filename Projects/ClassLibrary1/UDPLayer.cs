@@ -12,55 +12,89 @@ namespace ClassLibrary1
     {
         private Socket sock = null;
         private IPEndPoint hostEP;
-        //private IPEndPoint localEP;
         private EndPoint localEP;
 
-        public static int BUF_LEN = 500;
+        public static readonly int BUF_LEN = 500;
         private byte[] send_buf;
-        private int send_ind;
+        private int send_len;
         private byte[] recv_buf;
+        private int recv_len;
         private int recv_ind;
 
         public UDPLayer()
         {
-            sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            if (Socket.OSSupportsIPv6)
+            {
+                sock = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+                sock.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0);
+            }
+            else
+            {
+                sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            }
 
             send_buf = new byte[BUF_LEN];
-            send_ind = 0;
+            send_len = 0;
 
             recv_buf = new byte[BUF_LEN];
             recv_ind = 0;
+            recv_len = 0;
         }
 
-        public override bool connect(string hostname, int port)
+        public bool Connect(string hostname, int port)
         {
-            IPHostEntry hostInfo = Dns.GetHostEntry(hostname);
-            IPAddress[] IPaddrList = hostInfo.AddressList;
-
-            IPAddress hostAddr = null;
-            for (int i = 0; i < IPaddrList.Length; i++)
-            {
-                hostAddr = IPaddrList[i];
-                hostEP = new IPEndPoint(hostAddr, port);
-
-                //TODO: finish
-                //Socket.SupportsIPv6
-                //Socket.SupportsIPv4
-                //currAddr.AddressFamily.ToString() == ProtocolFamily.InterNetworkV6.ToString()
-
-                //verify fine
-            }
-            return false;
-        }
-
-        public override bool listen(int port)
-        {
-            //localEP = new IPEndPoint(IPAddress.Any, port);
-            IPEndPoint client = new IPEndPoint(IPAddress.Any, port);
-            localEP = (EndPoint)client;
-
             try
             {
+                IPHostEntry hostInfo = Dns.GetHostEntry(hostname);
+                IPAddress[] IPaddrList = hostInfo.AddressList;
+
+                IPAddress hostAddr = null;
+                IPEndPoint testEP = null;
+                hostEP = null;
+
+                if (Socket.OSSupportsIPv6)
+                {
+                    for (int i = 0; i < IPaddrList.Length; i++)
+                    {
+                        hostAddr = IPaddrList[i];
+                        testEP = new IPEndPoint(hostAddr, port);
+
+                        if (testEP.AddressFamily == AddressFamily.InterNetworkV6)
+                        {
+                            //test
+                            hostEP = testEP;
+                            return false;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < IPaddrList.Length; i++)
+                {
+                    hostAddr = IPaddrList[i];
+                    hostEP = new IPEndPoint(hostAddr, port);
+
+                    if (testEP.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        //test
+                        hostEP = testEP;
+                        return false;
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine(" Exception {0}", exc.Message);
+            }
+            return true;
+        }
+
+        public bool Listen(int port)
+        {
+            try
+            {
+                IPEndPoint client = new IPEndPoint((Socket.OSSupportsIPv6 ? IPAddress.IPv6Any : IPAddress.Any), port);
+                localEP = (EndPoint)client;
+
                 sock.Bind(localEP);
                 //TODO: finish (?)
             }
@@ -76,7 +110,15 @@ namespace ClassLibrary1
         {
             try
             {
-                sock.SendTo(send_buf, BUF_LEN, SocketFlags.None, hostEP);
+                /*
+                //######
+                System.Text.Encoding enc = System.Text.Encoding.ASCII;
+                string myString = enc.GetString(send_buf, 0, send_len);
+                Console.WriteLine("sending={0}", myString);
+                Console.WriteLine("length={0}", send_len);
+                //######
+                */
+                sock.SendTo(send_buf, send_len, SocketFlags.None, hostEP);
             }
             catch (Exception exc)
             {
@@ -86,26 +128,26 @@ namespace ClassLibrary1
             return false;
         }
 
-        public override bool writeByte(byte data)
+        public bool WriteByte(byte data)
         {
-            send_buf[send_ind] = data;
-            send_ind++;
-            if (send_ind == BUF_LEN)
+            send_buf[send_len] = data;
+            send_len++;
+            if (send_len == BUF_LEN)
             {
-                send_ind = 0;
                 if (send())
                 {
                     return true;
                 }
+                send_len = 0;
             }
             return false;
         }
 
-        public override bool write(byte[] data, int len)
+        public bool Write(byte[] data, int len)
         {
             for (int i = 0; i < len; i++)
             {
-                if (writeByte(data[i]))
+                if (WriteByte(data[i]))
                 {
                     return true;
                 }
@@ -113,12 +155,19 @@ namespace ClassLibrary1
             return false;
         }
 
-        //usage: error = recv(ref len);
-        private bool recv(ref int len)
+        private bool recv()
         {
             try
             {
-                len = sock.ReceiveFrom(recv_buf, BUF_LEN, SocketFlags.None, ref localEP);
+                recv_len = sock.ReceiveFrom(recv_buf, BUF_LEN, SocketFlags.None, ref localEP);
+                /*
+                //######
+                System.Text.Encoding enc = System.Text.Encoding.ASCII;
+                string myString = enc.GetString(recv_buf, 0, recv_len);
+                Console.WriteLine("recv={0}", myString);
+                Console.WriteLine("length={0}", recv_len);
+                //######
+                 */
             }
             catch (Exception exc)
             {
@@ -128,45 +177,58 @@ namespace ClassLibrary1
             return false;
         }
 
-        public override bool read(byte[] data, int len, ref int ret)
+        public bool ReadByte(ref byte data, ref int ret)
         {
-            bool msg_end = false;
-            int recv_len = 0;
+            if (recv_ind == recv_len)
+            {
+                if (0 < recv_len && recv_len < BUF_LEN)
+                {
+                    ret = 0;
+                    return false;
+                }
+                if (recv())
+                {
+                    ret = 0;
+                    return true;
+                }
+                recv_ind = 0;
+            }
+            data = recv_buf[recv_ind];
+            recv_ind++;
+
+            ret = 1;
+            return false;
+        }
+
+        public bool Read(byte[] data, int len, ref int ret)
+        {
+            int temp = 0;
             for (int i = 0; i < len; i++)
             {
-                if (recv_ind == 0)
+                if (ReadByte(ref data[i], ref temp))
                 {
-                    if (msg_end || recv(ref recv_len))
-                    {
-                        ret = i;
-                        return false;
-                    }
-                    msg_end = recv_len != BUF_LEN;
+                    ret = i;
+                    return true;
                 }
-                data[i] = recv_buf[BUF_LEN - recv_ind];
-                recv_ind--;
+                if (temp == 0)
+                {
+                    ret = i;
+                    return false;
+                }
             }
             ret = len;
             return false;
         }
 
-        public override bool readByte(byte[] data, int index, ref int ret)
+        public bool Close()
         {
-            byte[] temp = new byte[1];
-            if (read(temp, 1, ref ret))
+            if (send_len > 0)
             {
-                return true;
-            }
-            return false;
-        }
-
-
-        public override bool close()
-        {
-            if (send_ind > 0)
-            {
-                send_ind = 0;
-                send();
+                if (send())
+                {
+                    return true;
+                }
+                send_len = 0;
             }
 
             try

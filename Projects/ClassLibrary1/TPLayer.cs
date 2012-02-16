@@ -6,22 +6,20 @@ using System.Text;
 namespace ClassLibrary1
 {
     //Transport Layer Interface
-    public abstract class TPLayer
+    public interface TPLayer
     {
-        public abstract bool connect(string hostname, int port);
+        bool Connect(string hostname, int port);
 
-        public abstract bool listen(int port);
+        bool Listen(int port);
 
-        public abstract bool writeByte(byte data);	//should we change this?
+        bool WriteByte(byte data);
 
-        public abstract bool write(byte[] data, int len);	//should we change this?
+        bool Write(byte[] data, int len);
 
-        //usage: error = readByte(ref data);
-        //public abstract bool readByte(byte data);
-        public abstract bool readByte(byte[] data, int index, ref int ret); //TODO: change? figure out better interface?
+        bool ReadByte(ref byte data, ref int ret);
 
-        public abstract bool read(byte[] data, int len, ref int ret);
+        bool Read(byte[] data, int len, ref int ret);
 
-        public abstract bool close();
+        bool Close();
     }
 }
