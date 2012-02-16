@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Diagnostics;
 using ClassLibrary1;
 
 namespace server
@@ -23,10 +22,9 @@ namespace server
             FTP ftp = new SimpleFTP();
             string filePath = "output.dat";
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            bool ret = ftp.recvFile(port, filePath);
-            sw.Stop();
+            long time = 0;
+            bool ret = ftp.recvFile(port, filePath, ref time);
+            
             if (ret)
             {
                 Console.WriteLine("Transfer Error");
@@ -35,7 +33,7 @@ namespace server
             {
                 FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 long len = fs.Length; //possible problem if file larger than 4.2Gb
-                Console.WriteLine("Transfered file of size: {0}, over time: {1}, at rate: {2} kbps", len, sw.ElapsedMilliseconds, ((double) len / sw.ElapsedMilliseconds));
+                Console.WriteLine("Received file of size: {0}, over time: {1}, at rate: {2} kbps", len, time, len / (double)time);
             }
         }
     }

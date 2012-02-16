@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 
 namespace ClassLibrary1
 {
@@ -10,10 +11,12 @@ namespace ClassLibrary1
     {
         public static readonly int BUF_LEN = 8192; //64kb
 
-        public bool sendFile(string hostName, int port, string filePath)
+        public bool sendFile(string hostName, int port, string filePath, ref long time)
         {
             bool resp = false;
-
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            
             TPLayer tp = new UDPLayer();
             if (tp.Connect(hostName, port))
             {
@@ -52,14 +55,17 @@ namespace ClassLibrary1
                 resp = true;
             }
             tp.Close();
+            sw.Start();
 
+            time = sw.ElapsedMilliseconds;
             return resp;
         }
 
-        public bool recvFile(int port, string filePath)
+        public bool recvFile(int port, string filePath, ref long time)
         {
             bool resp = false;
-
+            Stopwatch sw = new Stopwatch();
+            
             TPLayer tp = new UDPLayer();
             if (tp.Listen(port))
             {
@@ -85,6 +91,7 @@ namespace ClassLibrary1
                 }
                 len = BitConverter.ToInt32(buf, 0);
                 Console.WriteLine("len={0}", len);
+                sw.Start();
 
                 int count = len;
                 for (int ind = 0; ind < len; ind += ret)
@@ -118,7 +125,9 @@ namespace ClassLibrary1
                 Console.WriteLine(e.Message);
             }
             tp.Close();
+            sw.Stop();
 
+            time = sw.ElapsedMilliseconds;
             return resp;
         }
     }

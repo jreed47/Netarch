@@ -7,8 +7,8 @@ namespace ClassLibrary1
 {
     public interface FTP
     {
-        bool sendFile(string hostName, int port, string filePath);
+        bool sendFile(string hostName, int port, string filePath, ref long time);
 
-        bool recvFile(int port, string filePath);
+        bool recvFile(int port, string filePath, ref long time);
     }
 }
