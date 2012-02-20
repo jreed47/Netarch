@@ -9,7 +9,7 @@ namespace ClassLibrary1
 {
     public class SimpleFTP : FTP
     {
-        public static readonly int BUF_LEN = 8192; //64kb
+        public static readonly int BUF_LEN = 65536; //64kb
 
         public bool sendFile(string hostName, int port, string filePath, ref long time)
         {
@@ -32,12 +32,12 @@ namespace ClassLibrary1
 
                 byte[] lenbytes = BitConverter.GetBytes(len);
                 tp.Write(lenbytes, lenbytes.Length);
-                Console.WriteLine("lenbytes={0}", lenbytes.Length);
+                //Console.WriteLine("lenbytes={0}", lenbytes.Length);
 
                 byte[] buf = new byte[BUF_LEN];
                 for (int ind = 0, ret = 0; ind < len; ind += ret)
                 {
-                    ret = fs.Read(buf, ind, BUF_LEN);
+                    ret = fs.Read(buf, 0, BUF_LEN);
                     if (tp.Write(buf, ret))
                     {
                         Console.WriteLine("Error: dropped file segment at: {0} of {1}", ind, ret);
@@ -46,7 +46,7 @@ namespace ClassLibrary1
                     }
                 }
 
-                //tp.writeByte(buf, ret) //send EOT or EOF char
+                //tp.writeByte(buf, ret) //should send EOT or EOF char?
                 fs.Close();
             }
             catch (System.IO.IOException e)
@@ -55,7 +55,7 @@ namespace ClassLibrary1
                 resp = true;
             }
             tp.Close();
-            sw.Start();
+            sw.Stop();
 
             time = sw.ElapsedMilliseconds;
             return resp;
@@ -82,7 +82,7 @@ namespace ClassLibrary1
                 int ret = 0;
 
                 byte[] lenbytes = BitConverter.GetBytes(len);
-                Console.WriteLine("lenbytes={0}", lenbytes.Length);
+                //Console.WriteLine("lenbytes={0}", lenbytes.Length);
                 
                 if (tp.Read(buf, lenbytes.Length, ref ret))
                 {
@@ -93,14 +93,13 @@ namespace ClassLibrary1
                 Console.WriteLine("len={0}", len);
                 sw.Start();
 
-                int count = len;
-                for (int ind = 0; ind < len; ind += ret)
+                for (int count = len; count > 0; count -= ret)
                 {
                     if (count < BUF_LEN)
                     {
                         if (tp.Read(buf, count, ref ret))
                         {
-                            Console.WriteLine("Error: dropped file segment at: {0} of {1}", ind, ret);
+                            Console.WriteLine("Error: dropped file segment at: {0} of {1}", len-count, ret);
                             resp = true;
                             break;
                         }
@@ -109,13 +108,13 @@ namespace ClassLibrary1
                     {
                         if (tp.Read(buf, BUF_LEN, ref ret))
                         {
-                            Console.WriteLine("Error: dropped file segment at: {0} of {1}", ind, ret);
+                            Console.WriteLine("Error: dropped file segment at: {0} of {1}", len - count, ret);
                             resp = true;
                             break;
                         }
                     }
 
-                    fs.Write(buf, ind, ret);
+                    fs.Write(buf, 0, ret);
                 }
 
                 fs.Close();

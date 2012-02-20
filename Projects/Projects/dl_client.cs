@@ -32,7 +32,7 @@ namespace client
             {
                 FileStream fs = new FileStream(args[2], FileMode.Open, FileAccess.Read);
                 long len = fs.Length; //possible problem if file larger than 4.2Gb
-                Console.WriteLine("Transmitted file of size: {0}, over time: {1}, at rate: {2} kbps", len, time, len / (double)time);
+                Console.WriteLine("Transmitted file of size: {0}, over time: {1}, at rate: {2} Kbps", len, time, 8*len / (double)time);
             }
         }
     }

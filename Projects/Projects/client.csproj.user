@@ -11,9 +11,9 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <StartArguments>localhost 5000 test.txt</StartArguments>
+    <StartArguments>128.173.92.33 16446 ../../../input2MBit.dat</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <StartArguments>localhost 5000 test.txt</StartArguments>
+    <StartArguments>128.173.92.33 16446 ../../../input2MBit.dat</StartArguments>
   </PropertyGroup>
 </Project>

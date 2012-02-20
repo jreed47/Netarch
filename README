@@ -1,0 +1,7 @@
+The Microsoft Studio C# 2010 solutions for project 1.
+
+Both can be compiled and run completely in windows through MS C# 2010. 
+
+The client/server simulation can be run with diminished functionality on a Linux box.
+
+The consumer/producer simulation can be run fully on a Linux box.

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading; //only for sleep()
 
 namespace ClassLibrary1
 {
@@ -15,6 +16,7 @@ namespace ClassLibrary1
         private EndPoint localEP;
 
         public static readonly int BUF_LEN = 500;
+        public static readonly int HDR_LEN = 0;
         private byte[] send_buf;
         private int send_len;
         private byte[] recv_buf;
@@ -23,14 +25,24 @@ namespace ClassLibrary1
 
         public UDPLayer()
         {
-            if (Socket.OSSupportsIPv6)
+            try
             {
-                sock = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
-                sock.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0);
+                if (Socket.OSSupportsIPv6 && !IsLinux()) //SocketOptionName.IPv6Only is not defined in linux, cannot dual bind in C# in linux
+                {
+                    Console.WriteLine("Creating IPv6 socket");
+                    sock = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+                    //sock.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, 0);
+                    sock.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, 0);
+                }
+                else
+                {
+                    Console.WriteLine("Creating IPv4 socket");
+                    sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                }
             }
-            else
+            catch (Exception exc)
             {
-                sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                Console.WriteLine(" Exception {0}", exc.Message);
             }
 
             send_buf = new byte[BUF_LEN];
@@ -39,6 +51,12 @@ namespace ClassLibrary1
             recv_buf = new byte[BUF_LEN];
             recv_ind = 0;
             recv_len = 0;
+        }
+
+        private bool IsLinux()
+        {
+            int p = (int)Environment.OSVersion.Platform;
+            return (p == 4) || (p == 6) || (p == 128);
         }
 
         public bool Connect(string hostname, int port)
@@ -52,7 +70,7 @@ namespace ClassLibrary1
                 IPEndPoint testEP = null;
                 hostEP = null;
 
-                if (Socket.OSSupportsIPv6)
+                if (Socket.OSSupportsIPv6 && !IsLinux())
                 {
                     for (int i = 0; i < IPaddrList.Length; i++)
                     {
@@ -61,8 +79,8 @@ namespace ClassLibrary1
 
                         if (testEP.AddressFamily == AddressFamily.InterNetworkV6)
                         {
-                            //test
-                            hostEP = testEP;
+                            Console.WriteLine("Connecting to IPv6 socket");
+                            hostEP = testEP; //works because use dual stack binding
                             return false;
                         }
                     }
@@ -71,11 +89,11 @@ namespace ClassLibrary1
                 for (int i = 0; i < IPaddrList.Length; i++)
                 {
                     hostAddr = IPaddrList[i];
-                    hostEP = new IPEndPoint(hostAddr, port);
+                    testEP = new IPEndPoint(hostAddr, port);
 
                     if (testEP.AddressFamily == AddressFamily.InterNetwork)
                     {
-                        //test
+                        Console.WriteLine("Connecting to IPv4 socket");
                         hostEP = testEP;
                         return false;
                     }
@@ -92,11 +110,20 @@ namespace ClassLibrary1
         {
             try
             {
-                IPEndPoint client = new IPEndPoint((Socket.OSSupportsIPv6 ? IPAddress.IPv6Any : IPAddress.Any), port);
+                IPEndPoint client;
+                if (Socket.OSSupportsIPv6 && !IsLinux())
+                {
+                    Console.WriteLine("Binding to IPv6 socket");
+                    client = new IPEndPoint(IPAddress.IPv6Any, port);
+                }
+                else
+                {
+                    Console.WriteLine("Binding to IPv4 socket");
+                    client = new IPEndPoint(IPAddress.Any, port);
+                }
                 localEP = (EndPoint)client;
 
                 sock.Bind(localEP);
-                //TODO: finish (?)
             }
             catch (Exception exc)
             {
@@ -119,6 +146,7 @@ namespace ClassLibrary1
                 //######
                 */
                 sock.SendTo(send_buf, send_len, SocketFlags.None, hostEP);
+                Thread.Sleep(30); //to prevent the server's UDP recv buffer from overflowing and dropping packets.
             }
             catch (Exception exc)
             {
@@ -205,6 +233,7 @@ namespace ClassLibrary1
             int temp = 0;
             for (int i = 0; i < len; i++)
             {
+                //Console.WriteLine("{0}", i);
                 if (ReadByte(ref data[i], ref temp))
                 {
                     ret = i;
